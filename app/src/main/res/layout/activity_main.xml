@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <Button
+        android:id="@+id/btn_jie"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="GSON开解析"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btn_jie2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="FastJson开解析"
+        app:layout_constraintTop_toBottomOf="@+id/btn_jie" />
+
+    <TextView
+        android:id="@+id/tvc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:background="@color/colorAccent"
+        android:text="Hello World!"
+        android:textColor="#ffffff"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_jie2" />
+
+    <TextView
+        android:id="@+id/tvc2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:background="@color/colorPrimary"
+        android:text="Hello World!"
+        android:textColor="#ffffff"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvc" />
+
+    <Button
+        android:id="@+id/btn_okhttp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="okhttp请求"
+        app:layout_constraintBottom_toTopOf="@+id/btn_retorfit"
+        app:layout_constraintLeft_toLeftOf="parent" />
+
+    <Button
+        android:id="@+id/btn_retorfit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="retorfit请求"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent" />
+
+    <Button
+        android:id="@+id/btn_shui"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="水波纹动画"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
