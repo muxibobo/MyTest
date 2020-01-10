@@ -24,7 +24,7 @@ import android.widget.ImageView;
  * <p>
  * Email:1245092675@qq.com
  * <p>
- * Describe:
+ * Describe:多功能水槽
  */
 @SuppressLint("AppCompatCustomView")
 public class TabWaveView2 extends ImageView{
