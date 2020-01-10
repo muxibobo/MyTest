@@ -1,6 +1,6 @@
 package com.bo.mytest.view;
 
-import android.annotation.SuppressLint;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -13,6 +13,8 @@ import android.graphics.Region;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.animation.AccelerateInterpolator;
 
 import androidx.appcompat.widget.AppCompatImageView;
 
@@ -136,7 +138,7 @@ public class TabWaveView2 extends AppCompatImageView {
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        drawCycle();
+//        drawCycle();
     }
 
     @Override
@@ -162,7 +164,7 @@ public class TabWaveView2 extends AppCompatImageView {
         mCentrePoint = new Point(mWidth / 2, mHeight / 2);
         mWaterLevel = (int) (2 * mRadius * flowNum / flowNumCount);//算出目标水位高度
         mUpSpeed = (float) (mWaterLevel / (mUpSpeedTime * mhanderTime));
-        mUpSpeed=mUpSpeed>1?mUpSpeedTime:1;
+        mUpSpeed = mUpSpeed > 1 ? mUpSpeedTime : 1;
         if (flowNum < flowNumCount) {
             //不满
             isDrawWaveFull = false;
@@ -186,6 +188,53 @@ public class TabWaveView2 extends AppCompatImageView {
     }
 
     //-----------------循环刷新-----------------
+    public void initValueAnimator() {
+        // 使用ValueAnimator创建一个过程
+        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, mWaterLevel);
+        valueAnimator.setDuration(mUpSpeedTime);
+        valueAnimator.setRepeatMode(ValueAnimator.RESTART);
+//        valueAnimator.setInterpolator(new AccelerateInterpolator());
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
+            @Override
+            public void onAnimationUpdate(ValueAnimator animator) {
+                // 不断重新计算上下左右位置
+                mUpSpeed = (Float) animator.getAnimatedValue();
+                Log.e("----bianhua-:",mUpSpeed+"");
+                updateWaveHeight();
+//                // 重绘
+//                postInvalidate();
+            }
+        });
+        valueAnimator.start();
+    }
+
+    private void updateWaveHeight() {
+        switch (mViewType) {
+            case RECT_VIEW:
+                if (mNowHeight > mWaterLevel) {
+                    //水满重新设置水位高
+                    mNowHeight = 0;
+                } else {
+                    mNowHeight += mUpSpeed;
+                }
+                break;
+            case CIRCLE_VIEW:
+                if (mNowHeight < mWaterLevel) {
+                    //未满一直加水
+                    mNowHeight += mUpSpeed;
+                }
+                break;
+        }
+
+        if (WaveType.CURVE_WAVE == mWaveType) {
+            if (mTranX > mRadius) {
+                mTranX = 0;
+            }
+            mTranX -= mWaveSpeed;
+        }
+        invalidate();
+    }
 
     /**
      * 绘制界面的线程
@@ -196,30 +245,7 @@ public class TabWaveView2 extends AppCompatImageView {
         @Override
         public void run() {
             // 不停绘制界面，这里是异步绘制，不采用外部通知开启绘制的方式，水波根据数据更新才会开始增长
-            switch (mViewType) {
-                case RECT_VIEW:
-                    if (mNowHeight > mWaterLevel) {
-                        //水满重新设置水位高
-                        mNowHeight = 0;
-                    } else {
-                        mNowHeight += mUpSpeed;
-                    }
-                    break;
-                case CIRCLE_VIEW:
-                    if (mNowHeight < mWaterLevel) {
-                        //未满一直加水
-                        mNowHeight += mUpSpeed;
-                    }
-                    break;
-            }
-
-            if (WaveType.CURVE_WAVE == mWaveType) {
-                if (mTranX > mRadius) {
-                    mTranX = 0;
-                }
-                mTranX -= mWaveSpeed;
-            }
-            invalidate();
+            updateWaveHeight();
             drawCycle();
         }
     }
@@ -316,8 +342,15 @@ public class TabWaveView2 extends AppCompatImageView {
         return this;
     }
 
-    public void startAnimation() {
+    public void startValueAnimation() {
         initWaveChange();
+        initValueAnimator();
+        invalidate();
+    }
+
+    public void startHanderAnimation() {
+        initWaveChange();
+        drawCycle();
         invalidate();
     }
 
@@ -394,7 +427,7 @@ public class TabWaveView2 extends AppCompatImageView {
      */
     private void drawContentText(Canvas canvas) {
         //绘制文字
-        mTextContent=mUpSpeed+"_"+mUpSpeedTime+"\n_"+mWaterLevel;
+        mTextContent = mUpSpeed + "_" + mNowHeight + "_" + mUpSpeedTime + "\n_" + mWaterLevel;
         if (!TextUtils.isEmpty(mTextContent)) {
             Rect mRect = new Rect();
             mTextPaint.getTextBounds(mTextContent, 0, mTextContent.length(), mRect);

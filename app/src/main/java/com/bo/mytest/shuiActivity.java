@@ -54,7 +54,9 @@ public class shuiActivity extends AppCompatActivity {
         mChargeWaveView3.setRectStrokeWidth(30);
 //        mChargeWaveView3.setRectWaveMargin(2.5f, 8.5f, 2.5f, 5.5f);
         mChargeWaveView3.setViewAboutType(TabWaveView2.ViewType.RECT_VIEW, TabWaveView2.WaveType.CURVE_WAVE);
-        mChargeWaveView3.setUpSpeedTime(1000*3).startAnimation();
+        mChargeWaveView3.setUpSpeedTime(1000*3)
+                .startValueAnimation();
+//                .startHanderAnimation();
     }
 
     //间隔查询时间
