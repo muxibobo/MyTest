@@ -13,8 +13,8 @@ import android.graphics.Region;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.widget.ImageView;
 
+import androidx.appcompat.widget.AppCompatImageView;
 
 
 /**
@@ -26,8 +26,7 @@ import android.widget.ImageView;
  * <p>
  * Describe:zdy
  */
-@SuppressLint("AppCompatCustomView")
-public class TabWaveView2 extends ImageView{
+public class TabWaveView2 extends AppCompatImageView {
     Point mCentrePoint;
     int mNowHeight = 0;//当前水位
     int mRadius = 0;
@@ -43,22 +42,28 @@ public class TabWaveView2 extends ImageView{
     private Paint mTextPaint;
 
     private int mCircleColor = Color.parseColor("#FF2DBBE9");//背景内圆颜色
-    private int mOutCircleColor = Color.parseColor("#B02DBBE9");//背景外圆颜色
-    private int mWaveColor1 = Color.parseColor("#4000C34B");//水波颜色，上
+    private int mOutCircleColor = Color.parseColor("#B0E97D7A");//背景外圆颜色
+    private int mWaveColor1 = Color.parseColor("#40E0E951");//水波颜色，上
     private int mWaveColor2 = Color.parseColor("#8000C34B");//水波颜色，下
     private int mBitmapColor = Color.parseColor("#3676B4");
     private int mWaterLevel;// 水目标高度
     private float flowNum = 0;//水目标占百分比这里是整数。
     private float flowNumCount = 100f;//百分比基数
-    private int mWaveSpeed = 2;//水波起伏速度,越大越快
-    private int mUpSpeed = 2;//水面上升速度,越大越快
+    private int mWaveSpeed = 20;//水波起伏移动速度,越大越快
+    private float mUpSpeed = 2f;//水面上升速度,越大越快
     private Paint mBitPaint;
     private WaveType mWaveType = WaveType.CURVE_WAVE;
     ViewType mViewType = ViewType.RECT_VIEW;
     //外圆环宽度
     private float mCircleStrokeWidth;
+    //外矩形宽度
+    private float mRectStrokeWidth;
     //显示文案
     private String mTextContent = "";
+    //更新变化到目标水位的时间
+    private long mUpSpeedTime = 1;
+    //刷新时间
+    private long mhanderTime = 60;
 
     /**
      * @param context
@@ -152,13 +157,17 @@ public class TabWaveView2 extends ImageView{
         if (mViewType == ViewType.CIRCLE_VIEW) {
             mRadius = (int) ((mWidth - mCircleStrokeWidth) / 2);
         } else {
-            mRadius = (int) (mHeight > mWidth ? (mHeight / 2) : (mWidth / 2));
+            mRadius = (int) ((mHeight > mWidth ? (mHeight / 2) : (mWidth / 2)) - mRectStrokeWidth);
         }
         mCentrePoint = new Point(mWidth / 2, mHeight / 2);
         mWaterLevel = (int) (2 * mRadius * flowNum / flowNumCount);//算出目标水位高度
+        mUpSpeed = (float) (mWaterLevel / (mUpSpeedTime * mhanderTime));
+        mUpSpeed=mUpSpeed>1?mUpSpeedTime:1;
         if (flowNum < flowNumCount) {
+            //不满
             isDrawWaveFull = false;
         } else {
+            //水满
             isDrawWaveFull = true;
         }
     }
@@ -166,7 +175,7 @@ public class TabWaveView2 extends ImageView{
     public void drawCycle() {
         mhandler.removeCallbacksAndMessages(null);
         if (getVisibility() == VISIBLE) {
-            mhandler.postDelayed(mRun, 60);
+            mhandler.postDelayed(mRun, mhanderTime);
         }
     }
 
@@ -189,22 +198,26 @@ public class TabWaveView2 extends ImageView{
             // 不停绘制界面，这里是异步绘制，不采用外部通知开启绘制的方式，水波根据数据更新才会开始增长
             switch (mViewType) {
                 case RECT_VIEW:
-                    mNowHeight += mUpSpeed;
-                    if (mNowHeight > mWaterLevel)
+                    if (mNowHeight > mWaterLevel) {
+                        //水满重新设置水位高
                         mNowHeight = 0;
+                    } else {
+                        mNowHeight += mUpSpeed;
+                    }
                     break;
                 case CIRCLE_VIEW:
-                    if (mWaterLevel > mNowHeight) {
+                    if (mNowHeight < mWaterLevel) {
+                        //未满一直加水
                         mNowHeight += mUpSpeed;
                     }
                     break;
             }
 
-            if (!isDrawWaveFull) {
+            if (WaveType.CURVE_WAVE == mWaveType) {
                 if (mTranX > mRadius) {
                     mTranX = 0;
                 }
-                mTranX = mTranX - mWaveSpeed;
+                mTranX -= mWaveSpeed;
             }
             invalidate();
             drawCycle();
@@ -272,8 +285,23 @@ public class TabWaveView2 extends ImageView{
         mBottomMargin = dpToPx(mContext, bottomMargin);
     }
 
+    /**
+     * 外环宽度
+     *
+     * @param strokeWidth
+     */
     public void setCircleStrokeWidth(float strokeWidth) {
         mCircleStrokeWidth = dpToPx(mContext, strokeWidth);
+        initWaveChange();
+    }
+
+    /**
+     * 矩形宽度
+     *
+     * @param strokeWidth
+     */
+    public void setRectStrokeWidth(float strokeWidth) {
+        mRectStrokeWidth = dpToPx(mContext, strokeWidth);
         initWaveChange();
     }
 
@@ -282,22 +310,28 @@ public class TabWaveView2 extends ImageView{
         mWaveSpeed = speed;
     }
 
-    //设置水面上升速度
-    public void setUpSpeed(int speed) {
-        mUpSpeed = speed;
+    //设置水面上升时间(毫秒)
+    public TabWaveView2 setUpSpeedTime(long speedTime) {
+        mUpSpeedTime = speedTime;
+        return this;
+    }
+
+    public void startAnimation() {
+        initWaveChange();
+        invalidate();
     }
 
     /**
      * @param waveColor1     上波浪颜色
      * @param waveColor2     下波浪颜色
      * @param circleColor    内圆颜色
-     * @param outcircleColor 外圈颜色
+     * @param outCircleColor 外圈颜色
      */
-    public void setViewColor(int waveColor1, int waveColor2, int circleColor, int outcircleColor) {
+    public void setViewColor(int waveColor1, int waveColor2, int circleColor, int outCircleColor) {
         mWaveColor1 = waveColor1;
         mWaveColor2 = waveColor2;
         mCircleColor = circleColor;
-        mOutCircleColor = outcircleColor;
+        mOutCircleColor = outCircleColor;
         mWavePaint1.setColor(mWaveColor1);
         mWavePaint2.setColor(mWaveColor2);
         mCirclePaint.setColor(mCircleColor);
@@ -353,8 +387,14 @@ public class TabWaveView2 extends ImageView{
         drawContentText(canvas);
     }
 
+    /**
+     * 居中的文案
+     *
+     * @param canvas
+     */
     private void drawContentText(Canvas canvas) {
         //绘制文字
+        mTextContent=mUpSpeed+"_"+mUpSpeedTime+"\n_"+mWaterLevel;
         if (!TextUtils.isEmpty(mTextContent)) {
             Rect mRect = new Rect();
             mTextPaint.getTextBounds(mTextContent, 0, mTextContent.length(), mRect);
@@ -362,7 +402,11 @@ public class TabWaveView2 extends ImageView{
         }
     }
 
-
+    /**
+     * 水波
+     *
+     * @param canvas
+     */
     private void drawWaveCanvas(Canvas canvas) {
         //计算正弦曲线的路径
         int mH = mCentrePoint.y + mRadius - mNowHeight;
@@ -408,15 +452,22 @@ public class TabWaveView2 extends ImageView{
                 pc.addCircle(mCentrePoint.x, mCentrePoint.y, mRadius, Path.Direction.CCW);
                 break;
             case RECT_VIEW:
-                pc.addRect(new RectF(0 + mLeftMargin, 0 + mTopMargin, mWidth - mRightMargin, mHeight - mBottomMargin), Path.Direction.CCW);
+//                pc.addRect(new RectF(mLeftMargin, mTopMargin, mWidth - mRightMargin, mHeight - mBottomMargin), Path.Direction.CCW);
+                pc.addRect(new RectF((int) mRectStrokeWidth + mLeftMargin, (int) mRectStrokeWidth + mTopMargin, (int) (mWidth - mRectStrokeWidth) - mRightMargin, (int) (mHeight - mRectStrokeWidth) - mBottomMargin), Path.Direction.CCW);
                 break;
         }
         canvas.clipPath(pc, Region.Op.INTERSECT);
+        //clipPath裁剪画布图形，之后在此裁剪后的画布上绘制需要图形
         canvas.drawPath(wavePath1, mWavePaint1);
         canvas.drawPath(wavePath2, mWavePaint2);
         canvas.restore();
     }
 
+    /**
+     * 画圆
+     *
+     * @param canvas
+     */
     private void drawCircleCanvas(Canvas canvas) {
         //画背景圆圈
         //画外圆环
@@ -429,13 +480,26 @@ public class TabWaveView2 extends ImageView{
         if (!isDrawWaveFull) {
             drawWaveCanvas(canvas);
         } else {
+            //满了就直接铺满
             canvas.drawCircle(mCentrePoint.x, mCentrePoint.y, mRadius, mWavePaint2);
         }
 
     }
 
+    /**
+     * 画矩形
+     *
+     * @param canvas
+     */
     private void drawRectCanvas(Canvas canvas) {
-        //画背景圆圈
+        //画外矩形
+        if (mRectStrokeWidth > 0) {
+//            mOutCirclePaint.setStrokeWidth(mRectStrokeWidth);
+            canvas.drawRect(new Rect(0, 0, mWidth, mHeight), mOutCirclePaint);
+//            canvas.drawRect(new Rect()mCentrePoint.x, mCentrePoint.y, mRadius + mRectStrokeWidth / 2, mOutCirclePaint);
+        }
+        //画内矩形
+        canvas.drawRect(new Rect((int) mRectStrokeWidth, (int) mRectStrokeWidth, (int) (mWidth - mRectStrokeWidth), (int) (mHeight - mRectStrokeWidth)), mCirclePaint);
         drawWaveCanvas(canvas);
     }
 

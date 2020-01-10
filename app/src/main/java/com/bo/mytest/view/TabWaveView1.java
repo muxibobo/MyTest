@@ -55,7 +55,7 @@ public class TabWaveView1 extends AppCompatImageView {
     private float flowNum = 0;//水目标占百分比这里是整数。
     private float flowNumCount = 100f;//百分比基数
 
-    private int mWaveSpeed = 2;//水波起伏速度,越大越快
+    private int mWaveSpeed = 5;//水波起伏速度,越大越快
     private int mUpSpeed = 2;//水面上升速度,越大越快
     private float minCircleProportion = 1.0f;//内圈占比
     private Bitmap imgBg;
@@ -225,7 +225,7 @@ public class TabWaveView1 extends AppCompatImageView {
                     break;
             }
 
-            if (!isDrawWaveFull) {
+            if (WaveType.CURVE_WAVE == mWaveType) {
                 if (mTranX > mRadius) {
                     mTranX = 0;
                 }
