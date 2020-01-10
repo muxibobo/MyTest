@@ -192,6 +192,7 @@ public class TabWaveView2 extends AppCompatImageView {
         // 使用ValueAnimator创建一个过程
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, mWaterLevel);
         valueAnimator.setDuration(mUpSpeedTime);
+        valueAnimator.setRepeatCount(Integer.MAX_VALUE);
         valueAnimator.setRepeatMode(ValueAnimator.RESTART);
 //        valueAnimator.setInterpolator(new AccelerateInterpolator());
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
